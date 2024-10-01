@@ -1,7 +1,8 @@
 import math
 import random
+import mysql.connector
 import matplotlib.pyplot as plt
-import csv
+from interfazLogin import id_usuario
 
 # Función para calcular la serie de Taylor para la función coseno
 def serie_taylor_coseno(x, nmax):
@@ -34,80 +35,97 @@ def generar_valores_funcion_coseno_con_ruido(num_puntos, nmax):
         ruido_vals.append(y_con_ruido)
         error_vals.append(error)
     
-    return x_vals, original_vals, ruido_vals, error_vals
+    return original_vals, ruido_vals, error_vals
 
-# Función para guardar los datos en un archivo CSV
-def guardar_en_csv(x_vals, original_vals, ruido_vals, error_vals, usuario=1, funcion="coseno", nombre_archivo="datos_funcion_coseno.csv"):
-    with open(nombre_archivo, mode='w', newline='') as archivo_csv:
-        escritor_csv = csv.writer(archivo_csv)
-        # Escribir la cabecera
-        escritor_csv.writerow(["x", "Serie Original", "Serie con Ruido", "Error", "Usuario", "Función"])
+# Función para guardar los registros en la base de datos
+def guardar_registros_bd(original_vals, ruido_vals, error_vals, id_usuario, tipo_serie="coseno"):
+    try:
+        # Conexión con la base de datos
+        conexion = mysql.connector.connect(
+            host="localhost",
+            user="root",
+            password="",
+            database="bd_series_trigonometricas"
+        )
+        cursor = conexion.cursor()
+
+        for i in range(len(original_vals)):
+            consulta = """
+            INSERT INTO registros (valor_calculado, valor_con_ruido, error, id_usuario, tipo_serie) 
+            VALUES (%s, %s, %s, %s, %s)
+            """
+            valores = (original_vals[i], ruido_vals[i], error_vals[i], id_usuario, tipo_serie)
+            cursor.execute(consulta, valores)
+
+        conexion.commit()
+        print("Registros guardados en la base de datos.")
         
-        # Escribir los datos
-        for i in range(len(x_vals)):
-            escritor_csv.writerow([x_vals[i], original_vals[i], ruido_vals[i], error_vals[i], usuario, funcion])
-    
-    print(f"Datos guardados en el archivo: {nombre_archivo}")
+        cursor.close()
+        conexion.close()
 
-# Función para leer los datos desde el archivo CSV
-def leer_desde_csv(nombre_archivo="datos_funcion_coseno.csv"):
-    x_vals = []
-    original_vals = []
-    ruido_vals = []
-    error_vals = []
-    usuarios = []
-    funciones = []
-    
-    with open(nombre_archivo, mode='r') as archivo_csv:
-        lector_csv = csv.reader(archivo_csv)
-        next(lector_csv)  # Saltar la cabecera
-        
-        for fila in lector_csv:
-            x_vals.append(float(fila[0]))
-            original_vals.append(float(fila[1]))
-            ruido_vals.append(float(fila[2]))
-            error_vals.append(float(fila[3]))
-            usuarios.append(fila[4])  # Leer el campo usuario
-            funciones.append(fila[5])  # Leer el campo función
-    
-    return x_vals, original_vals, ruido_vals, error_vals, usuarios, funciones
+    except mysql.connector.Error as error:
+        print(f"Error al conectar con la base de datos: {error}")
 
-# Función para graficar los resultados desde los datos del CSV
-def graficar_desde_csv(nombre_archivo="datos_funcion_coseno.csv"):
-    # Leer los datos desde el archivo CSV
-    x_vals, original_vals, ruido_vals, error_vals, usuarios, funciones = leer_desde_csv(nombre_archivo)
+# Función para leer los datos desde la base de datos
+def leer_desde_bd(tipo_serie="coseno"):
+    try:
+        # Conexión con la base de datos
+        conexion = mysql.connector.connect(
+            host="localhost",
+            user="root",
+            password="",
+            database="bd_series_trigonometricas"
+        )
+        cursor = conexion.cursor()
+
+        # Consultar los registros por tipo de serie
+        consulta = "SELECT valor_calculado, valor_con_ruido, error FROM registros WHERE tipo_serie = %s AND id_usuario = %s"
+        cursor.execute(consulta, (tipo_serie, id_usuario))
+
+        original_vals = []
+        ruido_vals = []
+        error_vals = []
+
+        for fila in cursor.fetchall():
+            original_vals.append(fila[0])
+            ruido_vals.append(fila[1])
+            error_vals.append(fila[2])
+
+        cursor.close()
+        conexion.close()
+
+        return original_vals, ruido_vals, error_vals
+
+    except mysql.connector.Error as error:
+        print(f"Error al conectar con la base de datos: {error}")
+        return [], [], []
+
+# Función para graficar los resultados desde la base de datos
+def graficar_desde_bd(tipo_serie="coseno"):
+    # Leer los datos desde la base de datos
+    original_vals, ruido_vals, error_vals = leer_desde_bd(tipo_serie)
     
-    # Graficar los resultados
+    if not original_vals:
+        print(f"No hay datos disponibles para la serie {tipo_serie}")
+        return
+    
     plt.figure(figsize=(10, 6))
-    
+
     # Graficar valores originales de la serie de Taylor
-    plt.plot(x_vals, original_vals, label="Serie Coseno (Original)", marker='o')
-    
+    plt.plot(range(len(original_vals)), original_vals, label=f"Serie {tipo_serie.capitalize()} (Original)", marker='o')
+
     # Graficar valores con ruido
-    plt.plot(x_vals, ruido_vals, label="Serie Coseno (Con Ruido)", marker='x')
-    
+    plt.plot(range(len(ruido_vals)), ruido_vals, label=f"Serie {tipo_serie.capitalize()} (Con Ruido)", marker='x')
+
     # Graficar el error
-    plt.plot(x_vals, error_vals, label="Error", linestyle='--', color='red')
-    
+    plt.plot(range(len(error_vals)), error_vals, label="Error", linestyle='--', color='red')
+
     # Personalización del gráfico
-    plt.title("Aproximación de la Serie de Taylor de Coseno (desde CSV)")
-    plt.xlabel("x")
+    plt.title(f"Aproximación de la Serie de Taylor de {tipo_serie.capitalize()} (desde BD)")
+    plt.xlabel("id_registro")
     plt.ylabel("Valor de la Serie")
     plt.legend()
     plt.grid(True)
-    
+
     # Mostrar el gráfico
     plt.show()
-
-# Número de puntos a generar y número de términos en la serie de Taylor
-num_puntos = 100  # Número de puntos en el gráfico
-nmax = 10         # Número de términos en la serie de Taylor
-
-# Generar los valores de la serie, con ruido y error
-x_vals, original_vals, ruido_vals, error_vals = generar_valores_funcion_coseno_con_ruido(num_puntos, nmax)
-
-# Guardar los datos en un archivo CSV, incluyendo los campos usuario y función
-guardar_en_csv(x_vals, original_vals, ruido_vals, error_vals, usuario=1, funcion="coseno", nombre_archivo="datos_funcion_coseno.csv")
-
-# Graficar los resultados leyendo desde el CSV
-graficar_desde_csv("datos_funcion_coseno.csv")
