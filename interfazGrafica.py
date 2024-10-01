@@ -79,6 +79,14 @@ def insertar_valores():
         original_vals, ruido_vals, error_vals = generar_valores_funcion_coseno_con_ruido(num_puntos, nmax)
         guardar_registros(original_vals, ruido_vals, error_vals, id_usuario, tipo_serie="coseno")
         messagebox.showinfo("Éxito", "Valores de coseno guardados en la base de datos.")
+    elif seleccion == "seno":
+        original_vals, ruido_vals, error_vals = generar_valores_funcion_coseno_con_ruido(num_puntos, nmax)
+        guardar_registros(original_vals, ruido_vals, error_vals, id_usuario, tipo_serie="seno")
+        messagebox.showinfo("Éxito", "Valores de seno guardados en la base de datos.")
+    elif seleccion == "fourier":
+        original_vals, ruido_vals, error_vals = generar_valores_funcion_coseno_con_ruido(num_puntos, nmax)
+        guardar_registros(original_vals, ruido_vals, error_vals, id_usuario, tipo_serie="fourier")
+        messagebox.showinfo("Éxito", "Valores de fourier guardados en la base de datos.")    
     else:
         messagebox.showwarning("Advertencia", "Funcionalidad no implementada para la serie seleccionada.")
 
@@ -90,3 +98,4 @@ btn_insertar = Button(frame_botones, text="Insertar valores", command=insertar_v
 btn_insertar.grid(row=0, column=0, padx=5)
 
 root.mainloop()
+
