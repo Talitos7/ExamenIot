@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import messagebox
 import mysql.connector
 
+
 global id_usuario
 id_usuario = None
   
@@ -30,6 +31,7 @@ def verificar():
             if resultado:
                 id_usuario = resultado[0]  
                 messagebox.showinfo("Inicio de sesión", f"Bienvenido/a {nombre}. Tu ID es: {id_usuario}")
+                
             else:
                 messagebox.showerror("Error", "Usuario no encontrado. Verifique los datos.")
             
