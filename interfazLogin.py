@@ -2,9 +2,11 @@ import tkinter as tk
 from tkinter import messagebox
 import mysql.connector
 
+#variable global para el id_usuario para la persistencia de los datos egun el usuario
 global id_usuario
 id_usuario = None
 
+#Función de verificación del inicio de sesión  
 def verificar():
     global id_usuario 
     nombre = entry_nombre.get()
@@ -14,6 +16,7 @@ def verificar():
         messagebox.showerror("Error", "Por favor, complete todos los campos.")
     else:
         try:
+            #Conexion con la base de datos
             conexion = mysql.connector.connect(
                 host="localhost",       
                 user="root",           
@@ -38,6 +41,7 @@ def verificar():
         except mysql.connector.Error as error:
             messagebox.showerror("Error", f"No se pudo conectar a la base de datos: {error}")
 
+#Interfaces con libreria tkinter
 root = tk.Tk()
 root.title("Inicio de Sesión")
 root.geometry("300x200")
