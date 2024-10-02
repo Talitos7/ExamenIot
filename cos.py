@@ -2,7 +2,6 @@ import math
 import random
 import mysql.connector
 import matplotlib.pyplot as plt
-from interfazLogin import id_usuario
 
 # Función para calcular la serie de Taylor para la función coseno
 def serie_taylor_coseno(x, nmax):
@@ -67,7 +66,7 @@ def guardar_registros_bd(original_vals, ruido_vals, error_vals, id_usuario, tipo
         print(f"Error al conectar con la base de datos: {error}")
 
 # Función para leer los datos desde la base de datos
-def leer_desde_bd(tipo_serie="coseno"):
+def leer_desde_bd(id_usuario, tipo_serie="coseno"):
     try:
         # Conexión con la base de datos
         conexion = mysql.connector.connect(
@@ -101,9 +100,9 @@ def leer_desde_bd(tipo_serie="coseno"):
         return [], [], []
 
 # Función para graficar los resultados desde la base de datos
-def graficar_desde_bd(tipo_serie="coseno"):
+def graficar_desde_bd(id_usuario, tipo_serie="coseno"):
     # Leer los datos desde la base de datos
-    original_vals, ruido_vals, error_vals = leer_desde_bd(tipo_serie)
+    original_vals, ruido_vals, error_vals = leer_desde_bd(id_usuario, tipo_serie)
     
     if not original_vals:
         print(f"No hay datos disponibles para la serie {tipo_serie}")
