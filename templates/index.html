@@ -9,6 +9,27 @@
 </head>
 <body>
     <h1>Gráfico en Tiempo Real</h1>
+
+    <form id="formulario">
+        <label for="tipo_serie">Tipo de Serie:</label>
+        <select id="tipo_serie" name="tipo_serie">
+            <option value="seno">Seno</option>
+            <option value="coseno">Coseno</option>
+            <option value="fourier">Fourier</option>
+        </select>
+
+        <label for="id_usuario">ID de Usuario:</label>
+        <select id="id_usuario" name="id_usuario">
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="3">4</option>
+            <option value="3">5</option>
+        </select>
+
+        <button type="button" id="actualizar">Actualizar Gráfico</button>
+    </form>
+
     <div id="grafico" style="width:100%;height:600px;"></div>
 
     <script>
@@ -19,13 +40,24 @@
             });
         }
 
-        // Llama a la función con tipo de serie y ID de usuario
-        var tipo_serie = "seno";  // Cambiar según la serie seleccionada
-        var id_usuario = 1;        // Cambiar según el usuario
+        // Llama a la función cuando se haga clic en el botón
+        $('#actualizar').click(function() {
+            var tipo_serie = $('#tipo_serie').val();
+            var id_usuario = $('#id_usuario').val();
+            actualizarGrafico(tipo_serie, id_usuario);
+        });
 
-        // Actualizar cada 2 segundos
-        setInterval(function() { actualizarGrafico(tipo_serie, id_usuario); }, 2000);
-        actualizarGrafico(tipo_serie, id_usuario);
+        // Cargar usuarios al inicio
+        $(document).ready(function() {
+            cargarUsuarios();
+        });
+
+        // Actualizar automáticamente cada 30 segundos
+        setInterval(function() { 
+            var tipo_serie = $('#tipo_serie').val();
+            var id_usuario = $('#id_usuario').val();
+            actualizarGrafico(tipo_serie, id_usuario); 
+        }, 30000);
     </script>
 </body>
 </html>
