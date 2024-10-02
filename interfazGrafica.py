@@ -6,6 +6,7 @@ from tkinter import *
 from tkinter import ttk, messagebox
 from interfazLogin import id_usuario
 from cos import generar_valores_funcion_coseno_con_ruido
+import dashboard  # Importa tu archivo dashboard
 
 # Función para conectar a la base de datos
 def conectar():
@@ -34,6 +35,10 @@ def guardar_registros(original_vals, ruido_vals, error_vals, id_usuario, tipo_se
 
     except mysql.connector.Error as error:
         messagebox.showerror("Error", f"No se pudo conectar a la base de datos: {error}")
+
+# Función para graficar llamando a dashboard
+def graficar():
+    dashboard.graficar_datos_serie()  # Llama a la función para graficar del archivo dashboard
 
 # Crear la ventana principal con Tkinter
 root = Tk()
@@ -94,8 +99,13 @@ def insertar_valores():
 frame_botones = Frame(root)
 frame_botones.pack(pady=10)
 
+# Botón para insertar valores
 btn_insertar = Button(frame_botones, text="Insertar valores", command=insertar_valores)
 btn_insertar.grid(row=0, column=0, padx=5)
+
+# Botón para graficar
+btn_graficar = Button(frame_botones, text="Graficar", command=graficar)
+btn_graficar.grid(row=0, column=1, padx=5)
 
 root.mainloop()
 
