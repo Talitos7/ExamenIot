@@ -1,6 +1,4 @@
 import mysql.connector
-import math
-import random
 import matplotlib.pyplot as plt
 from tkinter import *
 from tkinter import ttk, messagebox
@@ -36,9 +34,16 @@ def guardar_registros(original_vals, ruido_vals, error_vals, id_usuario, tipo_se
     except mysql.connector.Error as error:
         messagebox.showerror("Error", f"No se pudo conectar a la base de datos: {error}")
 
-# Función para graficar llamando a dashboard
+# Función para graficar y retornar el link al gráfico
 def graficar():
     dashboard.graficar_datos_serie()  # Llama a la función para graficar del archivo dashboard
+    
+    # Simula la generación del link del gráfico (modifica según sea necesario)
+    link = "http://localhost:5000/grafico_generado"
+    
+    # Muestra el link en el input de la interfaz
+    entry_link.delete(0, END)
+    entry_link.insert(0, link)
 
 # Crear la ventana principal con Tkinter
 root = Tk()
@@ -68,6 +73,19 @@ series_options = ["seno", "coseno", "fourier"]
 combobox = ttk.Combobox(frame_combobox, values=series_options)
 combobox.grid(row=0, column=1, padx=5, pady=5)
 combobox.current(0)
+
+# Etiqueta y ComboBox para seleccionar tipo de serie
+Label(frame_combobox, text="Selecciona el tipo de serie:").grid(row=1, column=0, padx=5, pady=5)
+
+tipo_serie_options = ["Tipo A", "Tipo B", "Tipo C"]
+combobox_tipo_serie = ttk.Combobox(frame_combobox, values=tipo_serie_options)
+combobox_tipo_serie.grid(row=1, column=1, padx=5, pady=5)
+combobox_tipo_serie.current(0)
+
+# Input para el link del gráfico
+Label(frame_combobox, text="Link del gráfico:").grid(row=2, column=0, padx=5, pady=5)
+entry_link = Entry(frame_combobox, width=40)
+entry_link.grid(row=2, column=1, padx=5, pady=5)
 
 # Función para obtener el valor seleccionado
 def obtener_seleccion():
@@ -108,4 +126,3 @@ btn_graficar = Button(frame_botones, text="Graficar", command=graficar)
 btn_graficar.grid(row=0, column=1, padx=5)
 
 root.mainloop()
-
