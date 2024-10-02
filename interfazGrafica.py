@@ -17,7 +17,23 @@ def conectar():
         database="bd_series_trigonometricas"
     )
     return conexion
+def borrar_datos():
+    try:
+        tipo_serie = obtener_seleccion()
+        conexion = conectar()
+        cursor = conexion.cursor()
+        
+        consulta = "DELETE FROM registros WHERE id_usuario = %s AND tipo_serie = %s"
+        valores = (id_usuario, tipo_serie)
+        cursor.execute(consulta, valores)
 
+        conexion.commit()
+        cursor.close()
+        conexion.close()
+        
+        messagebox.showinfo("Éxito", "Datos borrados correctamente.")
+    except mysql.connector.Error as error:
+        messagebox.showerror("Error", f"No se pudo borrar los datos: {error}")
 # Función para guardar los registros en la base de datos
 def guardar_registros(original_vals, ruido_vals, error_vals, id_usuario, tipo_serie="coseno"):
     try:
@@ -150,5 +166,7 @@ btn_insertar.grid(row=0, column=0, padx=5)
 # Botón para graficar
 btn_graficar = Button(frame_botones, text="Graficar", command=graficar)
 btn_graficar.grid(row=0, column=1, padx=5)
-
+# Botón para borrar datos
+btn_borrar = Button(frame_botones, text="Borrar datos", command=borrar_datos)
+btn_borrar.grid(row=0, column=2, padx=5)
 root.mainloop()
