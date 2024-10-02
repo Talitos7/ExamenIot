@@ -1,10 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
 import mysql.connector
-import matplotlib.pyplot as plt
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-import numpy as np
-import pandas as pd
 
 # Conexión a la base de datos
 def obtener_datos():
@@ -33,7 +29,7 @@ def ventana_dashboard():
 
     # Frame para la tabla de registros
     frame_tabla = tk.Frame(root)
-    frame_tabla.pack(padx=20, pady=20)
+    frame_tabla.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
 
     # Obtener los datos de la base de datos
     columnas, registros = obtener_datos()
@@ -41,26 +37,26 @@ def ventana_dashboard():
     if columnas and registros:
         # Crear tabla con los datos de la base de datos
         tabla = ttk.Treeview(frame_tabla, columns=columnas, show="headings", height=20)
-        
+
         # Configurar las cabeceras de la tabla
         for col in columnas:
             tabla.heading(col, text=col)
-            tabla.column(col, width=150)  # Ajustar el ancho de cada columna
+            tabla.column(col, width=150, anchor='center')  # Ajustar el ancho de cada columna
 
         # Insertar los datos en la tabla
         for fila in registros:
             tabla.insert("", tk.END, values=fila)
-        
-        tabla.pack()
+
+        tabla.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
         # Scrollbar para la tabla
         scrollbar = ttk.Scrollbar(frame_tabla, orient="vertical", command=tabla.yview)
         tabla.configure(yscroll=scrollbar.set)
-        scrollbar.pack(side="right", fill="y")
+        scrollbar.pack(side=tk.RIGHT, fill="y")
 
     # Botón para cerrar
     btn_salir = tk.Button(root, text="Salir", command=root.destroy)
-    btn_salir.pack(pady=20)
+    btn_salir.pack(pady=10)
 
     root.mainloop()
 
