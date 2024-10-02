@@ -16,11 +16,19 @@ def conectar():
     )
     return conexion
 
+
 # Función para graficar llamando a la API Flask
 def graficar():
     seleccion = obtener_seleccion()
-    original_vals = [...]  # Obtener estos valores desde tu base de datos
-    ruido_vals = [...]     # Obtener estos valores desde tu base de datos
+    
+    # Aquí debes obtener los valores reales desde tu base de datos o lógica
+    original_vals = []  # Asegúrate de llenar esta lista con datos reales
+    ruido_vals = []     # Asegúrate de llenar esta lista con datos reales
+
+    # Asegúrate de que tienes valores en estas listas
+    if not original_vals or not ruido_vals:
+        messagebox.showerror("Error", "No hay valores para graficar.")
+        return
 
     # Obtener el URL ingresado
     url_dashboard = entry_url.get()
@@ -36,6 +44,7 @@ def graficar():
         messagebox.showinfo("Éxito", "Gráfico generado.")
     else:
         messagebox.showerror("Error", "No se pudo generar el gráfico.")
+
 
 # Resto del código de la interfaz Tkinter
 def guardar_registros(original_vals, ruido_vals, error_vals, id_usuario, tipo_serie="coseno"):
