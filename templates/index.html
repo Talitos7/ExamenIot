@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard en Tiempo Real</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+</head>
+<body>
+    <h1>Gráfico en Tiempo Real</h1>
+    <div id="grafico" style="width:100%;height:600px;"></div>
+
+    <script>
+        function actualizarGrafico(tipo_serie, id_usuario) {
+            $.getJSON(`/datos_grafico/${tipo_serie}/${id_usuario}`, function(data) {
+                var grafico = document.getElementById('grafico');
+                Plotly.react(grafico, JSON.parse(data).data, JSON.parse(data).layout);
+            });
+        }
+
+        // Llama a la función con tipo de serie y ID de usuario
+        var tipo_serie = "seno";  // Cambiar según la serie seleccionada
+        var id_usuario = 1;        // Cambiar según el usuario
+
+        // Actualizar cada 2 segundos
+        setInterval(function() { actualizarGrafico(tipo_serie, id_usuario); }, 2000);
+        actualizarGrafico(tipo_serie, id_usuario);
+    </script>
+</body>
+</html>
