@@ -1,10 +1,12 @@
 import mysql.connector
-import matplotlib.pyplot as plt
 from tkinter import *
 from tkinter import ttk, messagebox
 from interfazLogin import id_usuario
 from cos import generar_valores_funcion_coseno_con_ruido
-import dashboard  # Importa tu archivo dashboard
+import webbrowser  # Para abrir el link en el navegador
+import threading   # Para correr Flask en un hilo separado
+import requests    # Para hacer solicitudes HTTP a Flask
+import dashboard   # Importa el archivo dashboard
 
 # Función para conectar a la base de datos
 def conectar():
@@ -34,16 +36,36 @@ def guardar_registros(original_vals, ruido_vals, error_vals, id_usuario, tipo_se
     except mysql.connector.Error as error:
         messagebox.showerror("Error", f"No se pudo conectar a la base de datos: {error}")
 
-# Función para graficar y retornar el link al gráfico
 def graficar():
-    dashboard.graficar_datos_serie()  # Llama a la función para graficar del archivo dashboard
+    nmax = int(entry_terminos.get())
+    num_puntos = int(entry_registros.get())
+    tipo_serie = obtener_seleccion()
+
+    # Genera los valores para la serie trigonométrica
+    original_vals, ruido_vals, error_vals = generar_valores_funcion_coseno_con_ruido(num_puntos, nmax)
     
-    # Simula la generación del link del gráfico (modifica según sea necesario)
-    link = "http://localhost:5000/grafico_generado"
+    # Llama a la función del archivo dashboard para graficar
+    dashboard.graficar_datos_serie(original_vals, ruido_vals, tipo_serie)
     
+    # Simula la generación del link del gráfico
+    try:
+        # Hacer una petición HTTP al servidor Flask para obtener el gráfico generado
+        response = requests.get(f"http://localhost:5000/datos_grafico/{tipo_serie}/{id_usuario}")
+        
+        if response.status_code == 200:
+            link = "http://localhost:5000"  # Podrías mostrar el dashboard completo
+        else:
+            link = "Error al generar gráfico"
+    
+    except Exception as e:
+        link = f"Error de conexión: {e}"
+
     # Muestra el link en el input de la interfaz
     entry_link.delete(0, END)
     entry_link.insert(0, link)
+# Función para ejecutar Flask en un hilo separado
+def iniciar_servidor_flask():
+    threading.Thread(target=dashboard.app.run, kwargs={"debug": False, "use_reloader": False}).start()
 
 # Crear la ventana principal con Tkinter
 root = Tk()
@@ -74,55 +96,25 @@ combobox = ttk.Combobox(frame_combobox, values=series_options)
 combobox.grid(row=0, column=1, padx=5, pady=5)
 combobox.current(0)
 
-# Etiqueta y ComboBox para seleccionar tipo de serie
-Label(frame_combobox, text="Selecciona el tipo de serie:").grid(row=1, column=0, padx=5, pady=5)
-
-tipo_serie_options = ["Tipo A", "Tipo B", "Tipo C"]
-combobox_tipo_serie = ttk.Combobox(frame_combobox, values=tipo_serie_options)
-combobox_tipo_serie.grid(row=1, column=1, padx=5, pady=5)
-combobox_tipo_serie.current(0)
-
 # Input para el link del gráfico
-Label(frame_combobox, text="Link del gráfico:").grid(row=2, column=0, padx=5, pady=5)
+Label(frame_combobox, text="Link del gráfico:").grid(row=1, column=0, padx=5, pady=5)
 entry_link = Entry(frame_combobox, width=40)
-entry_link.grid(row=2, column=1, padx=5, pady=5)
+entry_link.grid(row=1, column=1, padx=5, pady=5)
 
 # Función para obtener el valor seleccionado
 def obtener_seleccion():
     seleccion = combobox.get()
     return seleccion
 
-# Función para insertar valores en la base de datos
-def insertar_valores():
-    seleccion = obtener_seleccion()
-    nmax = int(entry_terminos.get())
-    num_puntos = int(entry_registros.get())
-    
-    if seleccion == "coseno":
-        original_vals, ruido_vals, error_vals = generar_valores_funcion_coseno_con_ruido(num_puntos, nmax)
-        guardar_registros(original_vals, ruido_vals, error_vals, id_usuario, tipo_serie="coseno")
-        messagebox.showinfo("Éxito", "Valores de coseno guardados en la base de datos.")
-    elif seleccion == "seno":
-        original_vals, ruido_vals, error_vals = generar_valores_funcion_coseno_con_ruido(num_puntos, nmax)
-        guardar_registros(original_vals, ruido_vals, error_vals, id_usuario, tipo_serie="seno")
-        messagebox.showinfo("Éxito", "Valores de seno guardados en la base de datos.")
-    elif seleccion == "fourier":
-        original_vals, ruido_vals, error_vals = generar_valores_funcion_coseno_con_ruido(num_puntos, nmax)
-        guardar_registros(original_vals, ruido_vals, error_vals, id_usuario, tipo_serie="fourier")
-        messagebox.showinfo("Éxito", "Valores de fourier guardados en la base de datos.")    
-    else:
-        messagebox.showwarning("Advertencia", "Funcionalidad no implementada para la serie seleccionada.")
-
 # Frame para los botones
 frame_botones = Frame(root)
 frame_botones.pack(pady=10)
 
 # Botón para insertar valores
-btn_insertar = Button(frame_botones, text="Insertar valores", command=insertar_valores)
+btn_insertar = Button(frame_botones, text="Insertar valores", command=graficar)
 btn_insertar.grid(row=0, column=0, padx=5)
 
-# Botón para graficar
-btn_graficar = Button(frame_botones, text="Graficar", command=graficar)
-btn_graficar.grid(row=0, column=1, padx=5)
+# Iniciar el servidor Flask
+iniciar_servidor_flask()
 
 root.mainloop()
