@@ -1,30 +1,27 @@
 from flask import Flask, jsonify, render_template, request
-import matplotlib.pyplot as plt
 import os
 import sqlite3
+import matplotlib.pyplot as plt
 
 app = Flask(__name__)
-
-# Configura la conexión a la base de datos SQLite
-DATABASE = 'tu_base_de_datos.db'  # Cambia esto al nombre de tu base de datos
+DATABASE = 'tu_base_de_datos.db'
 
 def get_db_connection():
     conn = sqlite3.connect(DATABASE)
     conn.row_factory = sqlite3.Row
     return conn
 
-# Ruta para renderizar la página principal
 @app.route('/')
 def index():
     return render_template('index.html')
 
-# Ruta para graficar los datos
 @app.route('/graficar_datos', methods=['POST'])
 def graficar_datos():
     data = request.json
     original_vals = data['original_vals']
     ruido_vals = data['ruido_vals']
     tipo_serie = data['tipo_serie']
+    url_dashboard = data.get('url_dashboard')  # Obtener el URL del dashboard si se proporciona
 
     plt.figure()
     plt.plot(original_vals, label='Valores Originales')
@@ -34,30 +31,15 @@ def graficar_datos():
     plt.ylabel('Valor')
     plt.legend()
 
-    # Guarda la figura en un archivo
     grafico_path = f'static/graficos/{tipo_serie}.png'
     plt.savefig(grafico_path)
     plt.close()
 
+    # Opcional: Puedes hacer algo con el URL del dashboard aquí
+    print(f'URL del Dashboard: {url_dashboard}')  # Ejemplo de uso: imprimir en la consola
+
     return jsonify({'success': True, 'grafico_path': grafico_path})
 
-# Ruta para obtener los datos del gráfico
-@app.route('/datos_grafico/<tipo_serie>/<int:id_usuario>', methods=['GET'])
-def datos_grafico(tipo_serie, id_usuario):
-    conn = get_db_connection()
-    cursor = conn.cursor()
-
-    # Consulta a la base de datos para obtener los datos del gráfico
-    cursor.execute("SELECT * FROM tu_tabla WHERE tipo_serie = ? AND id_usuario = ?", (tipo_serie, id_usuario))
-    datos = cursor.fetchall()
-    conn.close()
-
-    # Formato de los datos a retornar
-    datos_response = [dict(row) for row in datos]
-
-    return jsonify(datos_response)
-
 if __name__ == '__main__':
-    # Asegúrate de que el directorio está creado para guardar gráficos
     os.makedirs('static/graficos', exist_ok=True)
-    app.run(debug=True)
+    app.run(debug=True, port=5000)

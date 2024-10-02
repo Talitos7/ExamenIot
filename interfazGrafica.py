@@ -1,5 +1,7 @@
 import mysql.connector
 from tkinter import *
+import requests
+from tkinter import Tk, Frame, Label, Entry, Button, messagebox, ttk
 from tkinter import ttk, messagebox
 import requests
 from interfazLogin import id_usuario
@@ -17,22 +19,17 @@ def conectar():
 # Función para graficar llamando a la API Flask
 def graficar():
     seleccion = obtener_seleccion()
-    conn = conectar()
-    cursor = conn.cursor()
+    original_vals = [...]  # Obtener estos valores desde tu base de datos
+    ruido_vals = [...]     # Obtener estos valores desde tu base de datos
 
-    # Obtener los datos del gráfico
-    cursor.execute("SELECT valor_calculado, valor_con_ruido FROM registros WHERE tipo_serie = %s AND id_usuario = %s", (seleccion, id_usuario))
-    datos = cursor.fetchall()
-    conn.close()
+    # Obtener el URL ingresado
+    url_dashboard = entry_url.get()
 
-    original_vals = [row[0] for row in datos]
-    ruido_vals = [row[1] for row in datos]
-
-    # Aquí haces una solicitud POST a la ruta de graficar_datos
     response = requests.post('http://127.0.0.1:5000/graficar_datos', json={
         'original_vals': original_vals,
         'ruido_vals': ruido_vals,
-        'tipo_serie': seleccion
+        'tipo_serie': seleccion,
+        'url_dashboard': url_dashboard  # Agregar URL al cuerpo de la petición
     })
 
     if response.ok:
@@ -40,6 +37,7 @@ def graficar():
     else:
         messagebox.showerror("Error", "No se pudo generar el gráfico.")
 
+# Resto del código de la interfaz Tkinter
 def guardar_registros(original_vals, ruido_vals, error_vals, id_usuario, tipo_serie="coseno"):
     try:
         conexion = conectar()
@@ -110,5 +108,10 @@ btn_insertar.grid(row=0, column=0, padx=5)
 # Botón para graficar
 btn_graficar = Button(frame_botones, text="Graficar", command=graficar)
 btn_graficar.grid(row=0, column=1, padx=5)
+
+# Campo de entrada para el URL del dashboard
+Label(frame_botones, text="URL del Dashboard:").grid(row=1, column=0, padx=5, pady=5)
+entry_url = Entry(frame_botones, width=40)
+entry_url.grid(row=1, column=1, padx=5, pady=5)
 
 root.mainloop()
