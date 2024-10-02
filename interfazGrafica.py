@@ -66,11 +66,11 @@ def graficar_serie(id_usuario, tipo_serie, frame_grafica):
     fig, ax = plt.subplots(figsize=(8, 6))
 
     if tipo_serie == "coseno":
-        original_vals, ruido_vals, error_vals = cos.leer_desde_bd(id_usuario, tipo_serie="coseno")
+        original_vals, ruido_vals, error_vals = cos.leer_desde_bd(id_usuario, tipo_serie)
     elif tipo_serie == "seno":
-        original_vals, ruido_vals, error_vals = seno.leer_desde_bd(id_usuario, tipo_serie="seno")
+        original_vals, ruido_vals, error_vals = seno.leer_desde_bd(id_usuario, tipo_serie)
     elif tipo_serie == "fourier":
-        original_vals, ruido_vals, error_vals = fourier.leer_desde_bd(id_usuario, tipo_serie="fourier")
+        original_vals, ruido_vals, error_vals = fourier.leer_desde_bd(id_usuario, tipo_serie)
     else:
         return
 
@@ -103,27 +103,23 @@ def obtener_seleccion(combobox):
 # Función para insertar valores en la base de datos
 def insertar_valores(entry_terminos, entry_registros, combobox, id_usuario):
     seleccion = obtener_seleccion(combobox)
-    try:
-        nmax = int(entry_terminos.get())
-        num_puntos = int(entry_registros.get())
-        
-        if seleccion == "coseno":
-            original_vals, ruido_vals, error_vals = cos.generar_valores_funcion_coseno_con_ruido(num_puntos, nmax)
-            guardar_registros(original_vals, ruido_vals, error_vals, id_usuario, tipo_serie="coseno")
-            messagebox.showinfo("Éxito", "Valores de coseno guardados en la base de datos.")
-        elif seleccion == "seno":
-            original_vals, ruido_vals, error_vals = seno.generar_valores_funcion_seno_con_ruido(num_puntos, nmax)
-            guardar_registros(original_vals, ruido_vals, error_vals, id_usuario, tipo_serie="seno")  # Corregido aquí
-            messagebox.showinfo("Éxito", "Valores de seno guardados en la base de datos.")
-        elif seleccion == "fourier":
-            original_vals, ruido_vals, error_vals = fourier.generar_valores_funcion_fourier_con_ruido(num_puntos, nmax)
-            guardar_registros(original_vals, ruido_vals, error_vals, id_usuario, tipo_serie="fourier")  # Corregido aquí
-            messagebox.showinfo("Éxito", "Valores de fourier guardados en la base de datos.")
-        else:
-            messagebox.showwarning("Advertencia", "Funcionalidad no implementada para la serie seleccionada.")
-    except ValueError:
-        messagebox.showerror("Error", "Por favor, ingrese valores numéricos válidos.")
-
+    nmax = int(entry_terminos.get())
+    num_puntos = int(entry_registros.get())
+    
+    if seleccion == "coseno":
+        original_vals, ruido_vals, error_vals = cos.generar_valores_funcion_coseno_con_ruido(num_puntos, nmax)
+        guardar_registros(original_vals, ruido_vals, error_vals, id_usuario, tipo_serie="coseno")
+        messagebox.showinfo("Éxito", "Valores de coseno guardados en la base de datos.")
+    elif seleccion == "seno":
+        x_vals, original_vals, ruido_vals, error_vals = seno.generar_valores_funcion_seno_con_ruido(num_puntos, nmax)
+        guardar_registros(original_vals, ruido_vals, error_vals, id_usuario, tipo_serie="seno")
+        messagebox.showinfo("Éxito", "Valores de seno guardados en la base de datos.")
+    elif seleccion == "fourier":
+        x_vals, original_vals, ruido_vals, error_vals = fourier.generar_valores_funcion_fourier_con_ruido(num_puntos, nmax)
+        guardar_registros(original_vals, ruido_vals, error_vals, id_usuario, tipo_serie="fourier")
+        messagebox.showinfo("Éxito", "Valores de fourier guardados en la base de datos.")    
+    else:
+        messagebox.showwarning("Advertencia", "Funcionalidad no implementada para la serie seleccionada.")
 
 # Función para la ventana principal, recibe el id_usuario como argumento
 def ventanaPrincipal(id_usuario):
@@ -154,7 +150,7 @@ def ventanaPrincipal(id_usuario):
     series_options = ["seno", "coseno", "fourier"]
     combobox = ttk.Combobox(frame_combobox, values=series_options)
     combobox.grid(row=0, column=1, padx=5, pady=5)
-    combobox.current(1)  # Selecciona "coseno" como predeterminado
+    combobox.current(0)
 
     # Frame para los botones
     frame_botones = Frame(root)

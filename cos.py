@@ -98,33 +98,3 @@ def leer_desde_bd(id_usuario, tipo_serie="coseno"):
     except mysql.connector.Error as error:
         print(f"Error al conectar con la base de datos: {error}")
         return [], [], []
-
-# Función para graficar los resultados desde la base de datos
-def graficar_desde_bd(id_usuario, tipo_serie="coseno"):
-    # Leer los datos desde la base de datos
-    original_vals, ruido_vals, error_vals = leer_desde_bd(id_usuario, tipo_serie)
-    
-    if not original_vals:
-        print(f"No hay datos disponibles para la serie {tipo_serie}")
-        return
-    
-    plt.figure(figsize=(10, 6))
-
-    # Graficar valores originales de la serie de Taylor
-    plt.plot(range(len(original_vals)), original_vals, label=f"Serie {tipo_serie.capitalize()} (Original)", marker='o')
-
-    # Graficar valores con ruido
-    plt.plot(range(len(ruido_vals)), ruido_vals, label=f"Serie {tipo_serie.capitalize()} (Con Ruido)", marker='x')
-
-    # Graficar el error
-    plt.plot(range(len(error_vals)), error_vals, label="Error", linestyle='--', color='red')
-
-    # Personalización del gráfico
-    plt.title(f"Aproximación de la Serie de Taylor de {tipo_serie.capitalize()} (desde BD)")
-    plt.xlabel("id_registro")
-    plt.ylabel("Valor de la Serie")
-    plt.legend()
-    plt.grid(True)
-
-    # Mostrar el gráfico
-    plt.show()

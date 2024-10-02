@@ -86,4 +86,5 @@ def ventanaInicioSesion():
 
     root.mainloop()
 
+# Para iniciar la aplicación
 ventanaInicioSesion()
