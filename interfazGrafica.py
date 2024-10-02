@@ -1,14 +1,10 @@
 import mysql.connector
 from tkinter import *
 from tkinter import ttk, messagebox
+import requests
 from interfazLogin import id_usuario
 from cos import generar_valores_funcion_coseno_con_ruido
-import webbrowser  # Para abrir el link en el navegador
-import threading   # Para correr Flask en un hilo separado
-import requests    # Para hacer solicitudes HTTP a Flask
-import dashboard   # Importa el archivo dashboard
 
-# Función para conectar a la base de datos
 def conectar():
     conexion = mysql.connector.connect(
         host="localhost",
@@ -18,7 +14,32 @@ def conectar():
     )
     return conexion
 
-# Función para guardar los registros en la base de datos
+# Función para graficar llamando a la API Flask
+def graficar():
+    seleccion = obtener_seleccion()
+    conn = conectar()
+    cursor = conn.cursor()
+
+    # Obtener los datos del gráfico
+    cursor.execute("SELECT valor_calculado, valor_con_ruido FROM registros WHERE tipo_serie = %s AND id_usuario = %s", (seleccion, id_usuario))
+    datos = cursor.fetchall()
+    conn.close()
+
+    original_vals = [row[0] for row in datos]
+    ruido_vals = [row[1] for row in datos]
+
+    # Aquí haces una solicitud POST a la ruta de graficar_datos
+    response = requests.post('http://127.0.0.1:5000/graficar_datos', json={
+        'original_vals': original_vals,
+        'ruido_vals': ruido_vals,
+        'tipo_serie': seleccion
+    })
+
+    if response.ok:
+        messagebox.showinfo("Éxito", "Gráfico generado.")
+    else:
+        messagebox.showerror("Error", "No se pudo generar el gráfico.")
+
 def guardar_registros(original_vals, ruido_vals, error_vals, id_usuario, tipo_serie="coseno"):
     try:
         conexion = conectar()
@@ -30,42 +51,11 @@ def guardar_registros(original_vals, ruido_vals, error_vals, id_usuario, tipo_se
             cursor.execute(consulta, valores)
 
         conexion.commit()
-        cursor.close()
-        conexion.close()
-
     except mysql.connector.Error as error:
         messagebox.showerror("Error", f"No se pudo conectar a la base de datos: {error}")
-
-def graficar():
-    nmax = int(entry_terminos.get())
-    num_puntos = int(entry_registros.get())
-    tipo_serie = obtener_seleccion()
-
-    # Genera los valores para la serie trigonométrica
-    original_vals, ruido_vals, error_vals = generar_valores_funcion_coseno_con_ruido(num_puntos, nmax)
-    
-    # Llama a la función del archivo dashboard para graficar
-    dashboard.graficar_datos_serie(original_vals, ruido_vals, tipo_serie)
-    
-    # Simula la generación del link del gráfico
-    try:
-        # Hacer una petición HTTP al servidor Flask para obtener el gráfico generado
-        response = requests.get(f"http://localhost:5000/datos_grafico/{tipo_serie}/{id_usuario}")
-        
-        if response.status_code == 200:
-            link = "http://localhost:5000"  # Podrías mostrar el dashboard completo
-        else:
-            link = "Error al generar gráfico"
-    
-    except Exception as e:
-        link = f"Error de conexión: {e}"
-
-    # Muestra el link en el input de la interfaz
-    entry_link.delete(0, END)
-    entry_link.insert(0, link)
-# Función para ejecutar Flask en un hilo separado
-def iniciar_servidor_flask():
-    threading.Thread(target=dashboard.app.run, kwargs={"debug": False, "use_reloader": False}).start()
+    finally:
+        cursor.close()
+        conexion.close()
 
 # Crear la ventana principal con Tkinter
 root = Tk()
@@ -96,25 +86,29 @@ combobox = ttk.Combobox(frame_combobox, values=series_options)
 combobox.grid(row=0, column=1, padx=5, pady=5)
 combobox.current(0)
 
-# Input para el link del gráfico
-Label(frame_combobox, text="Link del gráfico:").grid(row=1, column=0, padx=5, pady=5)
-entry_link = Entry(frame_combobox, width=40)
-entry_link.grid(row=1, column=1, padx=5, pady=5)
-
-# Función para obtener el valor seleccionado
 def obtener_seleccion():
-    seleccion = combobox.get()
-    return seleccion
+    return combobox.get()
+
+def insertar_valores():
+    seleccion = obtener_seleccion()
+    nmax = int(entry_terminos.get())
+    num_puntos = int(entry_registros.get())
+
+    # Aquí puedes llamar a una función específica según la serie seleccionada
+    original_vals, ruido_vals, error_vals = generar_valores_funcion_coseno_con_ruido(num_puntos, nmax)
+    
+    guardar_registros(original_vals, ruido_vals, error_vals, id_usuario, tipo_serie=seleccion)
+    messagebox.showinfo("Éxito", f"Valores de {seleccion} guardados en la base de datos.")
 
 # Frame para los botones
 frame_botones = Frame(root)
 frame_botones.pack(pady=10)
 
-# Botón para insertar valores
-btn_insertar = Button(frame_botones, text="Insertar valores", command=graficar)
+btn_insertar = Button(frame_botones, text="Insertar valores", command=insertar_valores)
 btn_insertar.grid(row=0, column=0, padx=5)
 
-# Iniciar el servidor Flask
-iniciar_servidor_flask()
+# Botón para graficar
+btn_graficar = Button(frame_botones, text="Graficar", command=graficar)
+btn_graficar.grid(row=0, column=1, padx=5)
 
 root.mainloop()

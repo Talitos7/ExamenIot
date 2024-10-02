@@ -1,9 +1,7 @@
 from flask import Flask, jsonify, render_template, request
 import matplotlib.pyplot as plt
-import numpy as np
 import os
 import sqlite3
-import json
 
 app = Flask(__name__)
 
@@ -15,18 +13,18 @@ def get_db_connection():
     conn.row_factory = sqlite3.Row
     return conn
 
-# Ruta para renderizar la página principal (si es necesario)
+# Ruta para renderizar la página principal
 @app.route('/')
 def index():
     return render_template('index.html')
 
-# Ruta para generar y guardar el gráfico
+# Ruta para graficar los datos
 @app.route('/graficar_datos', methods=['POST'])
 def graficar_datos():
     data = request.json
-    original_vals = data.get('original_vals')
-    ruido_vals = data.get('ruido_vals')
-    tipo_serie = data.get('tipo_serie')
+    original_vals = data['original_vals']
+    ruido_vals = data['ruido_vals']
+    tipo_serie = data['tipo_serie']
 
     plt.figure()
     plt.plot(original_vals, label='Valores Originales')
@@ -35,7 +33,7 @@ def graficar_datos():
     plt.xlabel('Índice')
     plt.ylabel('Valor')
     plt.legend()
-    
+
     # Guarda la figura en un archivo
     grafico_path = f'static/graficos/{tipo_serie}.png'
     plt.savefig(grafico_path)
@@ -55,9 +53,7 @@ def datos_grafico(tipo_serie, id_usuario):
     conn.close()
 
     # Formato de los datos a retornar
-    datos_response = []
-    for row in datos:
-        datos_response.append(dict(row))
+    datos_response = [dict(row) for row in datos]
 
     return jsonify(datos_response)
 
