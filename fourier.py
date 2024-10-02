@@ -3,12 +3,12 @@ import random
 import matplotlib.pyplot as plt
 import mysql.connector
 
-# Función para calcular la serie de Taylor para la función seno
-def serie_taylor_seno(x, nmax):
+# Función para calcular la serie de Fourier para la función seno
+def serie_fourier_seno(x, nmax):
     sumatoria = 0
-    for n in range(nmax + 1):
-        # Término de la serie de Taylor para seno: (-1)^n * x^(2n+1) / (2n+1)!
-        termino = ((-1)**n * (x**(2 * n + 1))) / math.factorial(2 * n + 1)
+    for n in range(1, nmax + 1):  # La serie de Fourier para seno comienza en n=1
+        # Término de la serie de Fourier para seno: (2 / (n * π)) * (1 - (-1)^n)
+        termino = (2 / (n * math.pi)) * (1 - (-1)**n) * math.sin(n * x)
         sumatoria += termino
     return sumatoria
 
@@ -21,7 +21,7 @@ def generar_valores_funcion_fourier_con_ruido(num_puntos, nmax):
     
     for i in range(num_puntos):
         x = i * (2 * math.pi / num_puntos)  # Espaciado de puntos entre 0 y 2*pi
-        y_original = serie_taylor_seno(x, nmax)  # Valor original de la serie
+        y_original = serie_fourier_seno(x, nmax)  # Valor original de la serie
         
         # Ruido proporcional a la amplitud
         ruido = random.uniform(-0.1, 0.1) * abs(y_original)  # Ruido entre [-10%, 10%] de la amplitud
@@ -36,7 +36,7 @@ def generar_valores_funcion_fourier_con_ruido(num_puntos, nmax):
     
     return x_vals, original_vals, ruido_vals, error_vals
 
-# Función para guardar los datos bd
+# Función para guardar los datos en la base de datos
 def guardar_registros_bd(original_vals, ruido_vals, error_vals, id_usuario, tipo_serie="fourier"):
     try:
         # Conexión con la base de datos
@@ -66,7 +66,7 @@ def guardar_registros_bd(original_vals, ruido_vals, error_vals, id_usuario, tipo
         print(f"Error al conectar con la base de datos: {error}")
 
 # Función para leer los datos desde la base de datos
-def leer_desde_bd(id_usuario, tipo_serie = "fourier"):
+def leer_desde_bd(id_usuario, tipo_serie="fourier"):
     try:
         # Conexión con la base de datos
         conexion = mysql.connector.connect(
@@ -98,3 +98,23 @@ def leer_desde_bd(id_usuario, tipo_serie = "fourier"):
     except mysql.connector.Error as error:
         print(f"Error al conectar con la base de datos: {error}")
         return [], [], []
+
+# Ejemplo de uso
+if __name__ == "__main__":
+    num_puntos = 100
+    nmax = 10  # Número máximo de términos en la serie de Fourier
+    id_usuario = 1  # ID de usuario para la base de datos
+
+    x_vals, original_vals, ruido_vals, error_vals = generar_valores_funcion_fourier_con_ruido(num_puntos, nmax)
+    
+    # Guardar en base de datos
+    guardar_registros_bd(original_vals, ruido_vals, error_vals, id_usuario)
+
+    # Graficar resultados
+    plt.plot(x_vals, original_vals, label='Serie de Fourier (sin ruido)')
+    plt.plot(x_vals, ruido_vals, label='Valores con ruido', linestyle='--')
+    plt.title('Serie de Fourier para Seno')
+    plt.xlabel('x')
+    plt.ylabel('Valor')
+    plt.legend()
+    plt.show()
