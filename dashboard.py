@@ -1,76 +1,68 @@
-from flask import Flask, render_template, jsonify
+import tkinter as tk
+from tkinter import ttk
 import mysql.connector
-import plotly.graph_objs as go
-import plotly.io as pio
-from datetime import datetime
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import numpy as np
+import pandas as pd
 
-# Inicializar la aplicación Flask
-app = Flask(__name__)
+# Conexión a la base de datos
+def obtener_datos():
+    try:
+        conexion = mysql.connector.connect(
+            host="localhost",
+            user="root",
+            password="",
+            database="bd_series_trigonometricas"
+        )
+        cursor = conexion.cursor()
+        cursor.execute("SELECT id_registro, valor_calculado, valor_con_ruido, error, id_usuario, tipo_serie FROM registros")
+        datos = cursor.fetchall()
+        columnas = ['id_registro', 'valor_calculado', 'valor_con_ruido', 'error', 'id_usuario', 'tipo_serie']
+        conexion.close()
+        return columnas, datos
+    except mysql.connector.Error as err:
+        print(f"Error: {err}")
+        return None, None
 
-# Función para conectar a la base de datos
-def conectar():
-    conexion = mysql.connector.connect(
-        host="localhost",
-        user="root",  # Cambia por tu usuario
-        password="",  # Cambia por tu contraseña
-        database="bd_series_trigonometricas"
-    )
-    return conexion
+# Crear la ventana principal del Dashboard
+def ventana_dashboard():
+    root = tk.Tk()
+    root.title("Dashboard - Tabla de Datos")
+    root.geometry("1000x600")
 
-# Función para obtener los datos más recientes de la tabla registros
-def obtener_datos(tipo_serie, id_usuario):
-    conexion = conectar()
-    cursor = conexion.cursor()
+    # Frame para la tabla de registros
+    frame_tabla = tk.Frame(root)
+    frame_tabla.pack(padx=20, pady=20)
 
-    # Consulta SQL para obtener los datos
-    sql = "SELECT * FROM registros WHERE id_usuario = %s AND tipo_serie = %s ORDER BY id_registro"
-    cursor.execute(sql, (id_usuario, tipo_serie))
-    resultados = cursor.fetchall()
+    # Obtener los datos de la base de datos
+    columnas, registros = obtener_datos()
 
-    # Listas para almacenar los datos
-    original_vals = []
-    ruido_vals = []
-    error_vals = []
+    if columnas and registros:
+        # Crear tabla con los datos de la base de datos
+        tabla = ttk.Treeview(frame_tabla, columns=columnas, show="headings", height=20)
+        
+        # Configurar las cabeceras de la tabla
+        for col in columnas:
+            tabla.heading(col, text=col)
+            tabla.column(col, width=150)  # Ajustar el ancho de cada columna
 
-    for fila in resultados:
-        original_vals.append(fila[1])
-        ruido_vals.append(fila[2])
-        error_vals.append(fila[3])
+        # Insertar los datos en la tabla
+        for fila in registros:
+            tabla.insert("", tk.END, values=fila)
+        
+        tabla.pack()
 
-    cursor.close()
-    conexion.close()
+        # Scrollbar para la tabla
+        scrollbar = ttk.Scrollbar(frame_tabla, orient="vertical", command=tabla.yview)
+        tabla.configure(yscroll=scrollbar.set)
+        scrollbar.pack(side="right", fill="y")
 
-    return original_vals, ruido_vals, error_vals
+    # Botón para cerrar
+    btn_salir = tk.Button(root, text="Salir", command=root.destroy)
+    btn_salir.pack(pady=20)
 
-# Ruta principal que carga el dashboard
-@app.route('/')
-def index():
-    return render_template('index.html')
+    root.mainloop()
 
-# Ruta para actualizar los datos del gráfico
-@app.route('/datos_grafico/<tipo_serie>/<int:id_usuario>', methods=['GET'])
-def datos_grafico(tipo_serie, id_usuario):
-    original_vals, ruido_vals, error_vals = obtener_datos(tipo_serie, id_usuario)
-
-    # Crear la gráfica usando Plotly
-    trace1 = go.Scatter(x=list(range(len(original_vals))), y=original_vals, mode='lines+markers', name='Original')
-    trace2 = go.Scatter(x=list(range(len(ruido_vals))), y=ruido_vals, mode='lines+markers', name='Con Ruido')
-    trace3 = go.Scatter(x=list(range(len(error_vals))), y=error_vals, mode='lines', name='Error', line=dict(color='red', dash='dash'))
-
-    layout = go.Layout(
-        title=f'Gráfico en tiempo real - {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}',
-        xaxis_title='ID Registro',
-        yaxis_title='Valores de la serie',
-        legend=dict(x=0, y=1),
-        margin=dict(l=40, r=40, t=40, b=40)
-    )
-
-    fig = go.Figure(data=[trace1, trace2, trace3], layout=layout)
-
-    # Convertir la gráfica a JSON
-    graph_json = pio.to_json(fig)
-
-    return jsonify(graph_json)
-
-if __name__ == "__main__":
-    app.run(debug=True, use_reloader=False)
+# Ejecutar el dashboard
+ventana_dashboard()
