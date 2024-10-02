@@ -19,6 +19,25 @@ def conectar():
     )
     return conexion
 
+#Funcion para borrar datos
+def borrar_datos(combobox, id_usuario):
+    try:
+        tipo_serie = obtener_seleccion(combobox)
+        conexion = conectar()
+        cursor = conexion.cursor()
+        
+        consulta = "DELETE FROM registros WHERE id_usuario = %s AND tipo_serie = %s"
+        valores = (id_usuario, tipo_serie)
+        cursor.execute(consulta, valores)
+
+        conexion.commit()
+        cursor.close()
+        conexion.close()
+        
+        messagebox.showinfo("Éxito", "Datos borrados correctamente.")
+    except mysql.connector.Error as error:
+        messagebox.showerror("Error", f"No se pudo borrar los datos: {error}")
+
 # Función para guardar los registros en la base de datos
 def guardar_registros(original_vals, ruido_vals, error_vals, id_usuario, tipo_serie="coseno"):
     try:
@@ -93,17 +112,18 @@ def insertar_valores(entry_terminos, entry_registros, combobox, id_usuario):
             guardar_registros(original_vals, ruido_vals, error_vals, id_usuario, tipo_serie="coseno")
             messagebox.showinfo("Éxito", "Valores de coseno guardados en la base de datos.")
         elif seleccion == "seno":
-            original_vals, ruido_vals, error_vals = seno.generar_valores_funcion_coseno_con_ruido(num_puntos, nmax)
-            guardar_registros(original_vals, ruido_vals, error_vals, id_usuario, tipo_serie="coseno")
+            original_vals, ruido_vals, error_vals = seno.generar_valores_funcion_seno_con_ruido(num_puntos, nmax)
+            guardar_registros(original_vals, ruido_vals, error_vals, id_usuario, tipo_serie="seno")  # Corregido aquí
             messagebox.showinfo("Éxito", "Valores de seno guardados en la base de datos.")
         elif seleccion == "fourier":
-            original_vals, ruido_vals, error_vals = fourier.generar_valores_funcion_coseno_con_ruido(num_puntos, nmax)
-            guardar_registros(original_vals, ruido_vals, error_vals, id_usuario, tipo_serie="coseno")
+            original_vals, ruido_vals, error_vals = fourier.generar_valores_funcion_fourier_con_ruido(num_puntos, nmax)
+            guardar_registros(original_vals, ruido_vals, error_vals, id_usuario, tipo_serie="fourier")  # Corregido aquí
             messagebox.showinfo("Éxito", "Valores de fourier guardados en la base de datos.")
         else:
             messagebox.showwarning("Advertencia", "Funcionalidad no implementada para la serie seleccionada.")
     except ValueError:
         messagebox.showerror("Error", "Por favor, ingrese valores numéricos válidos.")
+
 
 # Función para la ventana principal, recibe el id_usuario como argumento
 def ventanaPrincipal(id_usuario):
@@ -153,4 +173,8 @@ def ventanaPrincipal(id_usuario):
     btn_graficar = Button(frame_botones, text="Graficar", command=lambda: graficar_serie(id_usuario, obtener_seleccion(combobox), frame_grafica))
     btn_graficar.grid(row=0, column=1, padx=5)
     
+    # Botón para borrar datos
+    btn_borrar = Button(frame_botones, text="Borrar datos", command=lambda: borrar_datos(combobox, id_usuario))
+    btn_borrar.grid(row=0, column=2, padx=5)
+
     root.mainloop()

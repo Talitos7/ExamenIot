@@ -13,7 +13,7 @@ def serie_taylor_seno(x, nmax):
     return sumatoria
 
 # Función para generar valores con ruido
-def generar_valores_funcion_seno_con_ruido(num_puntos, nmax):
+def generar_valores_funcion_fourier_con_ruido(num_puntos, nmax):
     x_vals = []
     original_vals = []
     ruido_vals = []
