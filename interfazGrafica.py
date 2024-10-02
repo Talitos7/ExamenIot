@@ -6,7 +6,7 @@ from tkinter import *
 from tkinter import ttk, messagebox
 from interfazLogin import id_usuario
 from cos import generar_valores_funcion_coseno_con_ruido
-import dashboard  # Importa tu archivo dashboard
+
 
 # Función para conectar a la base de datos
 def conectar():
@@ -36,9 +36,53 @@ def guardar_registros(original_vals, ruido_vals, error_vals, id_usuario, tipo_se
     except mysql.connector.Error as error:
         messagebox.showerror("Error", f"No se pudo conectar a la base de datos: {error}")
 
-# Función para graficar llamando a dashboard
+# Función para graficar
 def graficar():
-    dashboard.graficar_datos_serie()  # Llama a la función para graficar del archivo dashboard
+    try:
+        conexion = conectar()
+        cursor = conexion.cursor()
+        
+        # Obtener el tipo de serie seleccionado
+        tipo_serie = obtener_seleccion()
+        
+        # Consulta SQL para obtener los datos filtrados
+        sql = "SELECT valor_calculado, valor_con_ruido, error FROM registros WHERE tipo_serie = %s AND id_usuario = %s"
+        cursor.execute(sql, (tipo_serie, id_usuario))
+        resultados = cursor.fetchall()
+
+        # Listas para almacenar los datos
+        valor_calculado = []
+        valor_con_ruido = []
+        error = []
+
+        # Procesar los resultados
+        for fila in resultados:
+            valor_calculado.append(fila[0])   # Valor calculado
+            valor_con_ruido.append(fila[1])    # Valor con ruido
+            error.append(fila[2])              # Error
+
+        # Cerrar la conexión
+        cursor.close()
+        conexion.close()
+
+        # Graficar los resultados
+        plt.figure(figsize=(10, 6))
+        plt.plot(valor_calculado, label="Valor Calculado", marker='o')
+        plt.plot(valor_con_ruido, label="Valor con Ruido", marker='x')
+        plt.plot(error, label="Error", linestyle='--', color='red')
+
+        # Personalización del gráfico
+        plt.title(f"Gráfico de la serie: {tipo_serie}")
+        plt.xlabel("Índice")
+        plt.ylabel("Valores")
+        plt.legend()
+        plt.grid(True)
+
+        # Mostrar el gráfico
+        plt.show()
+
+    except mysql.connector.Error as error:
+        messagebox.showerror("Error", f"No se pudo obtener los datos: {error}")
 
 # Crear la ventana principal con Tkinter
 root = Tk()
@@ -108,4 +152,3 @@ btn_graficar = Button(frame_botones, text="Graficar", command=graficar)
 btn_graficar.grid(row=0, column=1, padx=5)
 
 root.mainloop()
-
