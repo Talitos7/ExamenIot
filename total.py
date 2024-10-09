@@ -59,7 +59,7 @@ def registrar_usuario():
                 id_usuario = cursor.fetchone()[0]
                 
                 messagebox.showinfo("Registro exitoso", f"Usuario {nombre} registrado correctamente.")
-               
+                
                 root.withdraw() # Cerrar la ventana de registro
                 ventanaPrincipal(id_usuario)  # Abrir la ventana principal y pasar el id_usuario
 
@@ -148,26 +148,31 @@ def insertar_valores(entry_terminos, entry_registros, combobox, id_usuario):
 
 def ventanaRegistro():
     global entry_nombre, entry_email, root
-    # Interfaces con librería tkinter
-    root = tk.Tk()
-    root.title("Registro de Usuario")
-    root.geometry("500x350")
+    root.withdraw()  # Ocultar la ventana de inicio de sesión
+    
+    # Crear nueva ventana para el registro
+    ventana_registro = tk.Toplevel(root)
+    ventana_registro.title("Registro de Usuario")
+    ventana_registro.geometry("500x350")
 
-    label_titulo = tk.Label(root, text="Formulario de Registro", font=("Arial", 14))
+    label_titulo = tk.Label(ventana_registro, text="Formulario de Registro", font=("Arial", 14))
     label_titulo.pack(pady=10)
 
-    label_nombre = tk.Label(root, text="Nombre:")
+    label_nombre = tk.Label(ventana_registro, text="Nombre:")
     label_nombre.pack(pady=5)
-    entry_nombre = tk.Entry(root, width=30)
+    entry_nombre = tk.Entry(ventana_registro, width=30)
     entry_nombre.pack(pady=5)
 
-    label_email = tk.Label(root, text="Correo Electrónico:")
+    label_email = tk.Label(ventana_registro, text="Correo Electrónico:")
     label_email.pack(pady=5)
-    entry_email = tk.Entry(root, width=30)
+    entry_email = tk.Entry(ventana_registro, width=30)
     entry_email.pack(pady=5)
 
-    button_registrar = tk.Button(root, text="Registrar", command=registrar_usuario)
+    button_registrar = tk.Button(ventana_registro, text="Registrar", command=registrar_usuario)
     button_registrar.pack(pady=20)
+
+
+
 
 # Función para la ventana principal
 def ventanaPrincipal(id_usuario):
@@ -235,6 +240,7 @@ def ventanaInicioSesion():
     root.mainloop()
 
 ventanaInicioSesion()
+
 
 
 
