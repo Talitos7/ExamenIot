@@ -24,6 +24,50 @@ def conectar():
     )
     return conexion
 
+def registrar_usuario():
+    nombre = entry_nombre.get()
+    email = entry_email.get()
+    
+    if nombre == "" or email == "":
+        messagebox.showerror("Error", "Por favor, complete todos los campos.")
+    else:
+        try:
+            # Conexión con la base de datos
+            conexion = mysql.connector.connect(
+                host="localhost",       
+                user="root",           
+                password="", 
+                database="bd_series_trigonometricas"
+            )
+            cursor = conexion.cursor()
+
+            # Verificar si el correo ya está registrado
+            consulta_verificar = "SELECT id_usuario FROM usuario WHERE correo = %s"
+            cursor.execute(consulta_verificar, (email,))
+            resultado = cursor.fetchone()
+
+            if resultado:
+                messagebox.showerror("Error", "Este correo ya está registrado. Intenta con otro correo.")
+            else:
+                # Insertar el nuevo usuario
+                consulta = "INSERT INTO usuario (nombre, correo) VALUES (%s, %s)"
+                cursor.execute(consulta, (nombre, email))
+                conexion.commit()
+
+                # Obtener el id del usuario recién registrado
+                cursor.execute("SELECT id_usuario FROM usuario WHERE correo = %s", (email,))
+                id_usuario = cursor.fetchone()[0]
+                
+                messagebox.showinfo("Registro exitoso", f"Usuario {nombre} registrado correctamente.")
+               
+                root.withdraw() # Cerrar la ventana de registro
+                ventanaPrincipal(id_usuario)  # Abrir la ventana principal y pasar el id_usuario
+
+            cursor.close()
+            conexion.close()
+
+        except mysql.connector.Error as error:
+            messagebox.showerror("Error", f"No se pudo conectar a la base de datos: {error}")
 # Función de verificación de inicio de sesión
 def verificar():
     global id_usuario 
@@ -102,6 +146,29 @@ def insertar_valores(entry_terminos, entry_registros, combobox, id_usuario):
         x_vals, original_vals, ruido_vals, error_vals = fourier.generar_valores_funcion_fourier_con_ruido(num_puntos, nmax)
         guardar_registros(original_vals, ruido_vals, error_vals, id_usuario, tipo_serie="fourier")
 
+def ventanaRegistro():
+    global entry_nombre, entry_email, root
+    # Interfaces con librería tkinter
+    root = tk.Tk()
+    root.title("Registro de Usuario")
+    root.geometry("500x350")
+
+    label_titulo = tk.Label(root, text="Formulario de Registro", font=("Arial", 14))
+    label_titulo.pack(pady=10)
+
+    label_nombre = tk.Label(root, text="Nombre:")
+    label_nombre.pack(pady=5)
+    entry_nombre = tk.Entry(root, width=30)
+    entry_nombre.pack(pady=5)
+
+    label_email = tk.Label(root, text="Correo Electrónico:")
+    label_email.pack(pady=5)
+    entry_email = tk.Entry(root, width=30)
+    entry_email.pack(pady=5)
+
+    button_registrar = tk.Button(root, text="Registrar", command=registrar_usuario)
+    button_registrar.pack(pady=20)
+
 # Función para la ventana principal
 def ventanaPrincipal(id_usuario):
     ventana = tk.Toplevel(root)
@@ -148,7 +215,7 @@ def ventanaInicioSesion():
     global root
     root = tk.Tk()
     root.title("Inicio de Sesión")
-    root.geometry("300x250")
+    root.geometry("500x350")
 
     tk.Label(root, text="Inicio de Sesión", font=("Arial", 14)).pack(pady=10)
 
@@ -163,7 +230,11 @@ def ventanaInicioSesion():
     entry_email.pack(pady=5)
 
     tk.Button(root, text="Iniciar Sesión", command=verificar).pack(pady=10)
+    tk.Button(root, text="Registrar Nuevo Usuario", command=ventanaRegistro).pack(pady=30)
+    
     root.mainloop()
 
 ventanaInicioSesion()
+
+
 
