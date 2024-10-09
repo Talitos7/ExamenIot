@@ -313,71 +313,74 @@ def leer_desde_bd(id_usuario, tipo_serie):
 def ventanaRegistro():
     global entry_nombre, entry_email, root
     root.withdraw()  # Ocultar la ventana de inicio de sesión
-    
+
     # Crear nueva ventana para el registro
     ventana_registro = tk.Toplevel(root)
     ventana_registro.title("Registro de Usuario")
     ventana_registro.geometry("500x350")
-
-    label_titulo = tk.Label(ventana_registro, text="Formulario de Registro", font=("Arial", 14))
+    ventana_registro.configure(bg="#f2e9e4")  # Color de fondo
+    
+    label_titulo = tk.Label(ventana_registro, text="Formulario de Registro", font=("Arial", 16, "bold"), bg="#f2e9e4")
     label_titulo.pack(pady=10)
 
-    label_nombre = tk.Label(ventana_registro, text="Nombre:")
+    label_nombre = tk.Label(ventana_registro, text="Nombre:", bg="#f2e9e4",font=("Arial", 10, "bold"))
     label_nombre.pack(pady=5)
-    entry_nombre = tk.Entry(ventana_registro, width=30)
+    entry_nombre = tk.Entry(ventana_registro, width=30, bg="#FFFFFF", bd=2, relief="groove")
     entry_nombre.pack(pady=5)
 
-    label_email = tk.Label(ventana_registro, text="Correo Electrónico:")
+    label_email = tk.Label(ventana_registro, text="Correo Electrónico:", bg="#f2e9e4",font=("Arial", 10, "bold"))
     label_email.pack(pady=5)
-    entry_email = tk.Entry(ventana_registro, width=30)
+    entry_email = tk.Entry(ventana_registro, width=30, bg="#FFFFFF", bd=2, relief="groove")
     entry_email.pack(pady=5)
 
-    button_registrar = tk.Button(ventana_registro, text="Registrar", command=registrar_usuario)
+    button_registrar = tk.Button(ventana_registro, text="Registrar", command=registrar_usuario, 
+                                  bg="#6a994e", fg="white", font=("Arial", 12), relief="raised")
     button_registrar.pack(pady=20)
 
 
-
-
-# Función para la ventana principal
 def ventanaPrincipal(id_usuario):
     ventana = tk.Toplevel(root)
     ventana.title("SERIE TRIGONOMÉTRICA")
     ventana.geometry("800x600")
+    ventana.configure(bg="#f2e9e4")  # Color de fondo
 
-    frame_inputs = tk.Frame(ventana)
+    frame_inputs = tk.Frame(ventana, bg="#f2e9e4")
     frame_inputs.pack(pady=10)
 
-    tk.Label(frame_inputs, text="Número de términos").grid(row=1, column=0, padx=5, pady=5)
-    entry_terminos = tk.Entry(frame_inputs)
+    tk.Label(frame_inputs, text="Número de términos:", bg="#f2e9e4",font=("Arial", 10, "bold")).grid(row=1, column=0, padx=5, pady=5)
+    entry_terminos = tk.Entry(frame_inputs, bg="#FFFFFF", bd=2, relief="groove")
     entry_terminos.grid(row=1, column=1, padx=5, pady=5)
 
-    tk.Label(frame_inputs, text="Cantidad de registros").grid(row=2, column=0, padx=5, pady=5)
-    entry_registros = tk.Entry(frame_inputs)
+    tk.Label(frame_inputs, text="Cantidad de registros:", bg="#f2e9e4",font=("Arial", 10, "bold")).grid(row=2, column=0, padx=5, pady=5)
+    entry_registros = tk.Entry(frame_inputs, bg="#FFFFFF", bd=2, relief="groove")
     entry_registros.grid(row=2, column=1, padx=5, pady=5)
 
-    frame_combobox = tk.Frame(ventana)
+    frame_combobox = tk.Frame(ventana, bg="#F1F1F1")
     frame_combobox.pack(pady=10)
 
-    tk.Label(frame_combobox, text="Selecciona la serie trigonométrica:").grid(row=0, column=0, padx=5, pady=5)
+    tk.Label(frame_combobox, text="Selecciona la serie trigonométrica:", bg="#F1F1F1",font=("Arial", 10, "bold")).grid(row=0, column=0, padx=5, pady=5)
 
     series_options = ["seno", "coseno", "fourier"]
     combobox = ttk.Combobox(frame_combobox, values=series_options)
     combobox.grid(row=0, column=1, padx=5, pady=5)
     combobox.current(0)
 
-    frame_botones = tk.Frame(ventana)
+    frame_botones = tk.Frame(ventana, bg="#F1F1F1")
     frame_botones.pack(pady=10)
-    
+
     frame_grafica = tk.Frame(ventana)
     frame_grafica.pack(pady=20, fill=tk.BOTH, expand=True)
 
     btn_insertar = tk.Button(frame_botones, text="Insertar valores", 
-                             command=lambda: insertar_valores(entry_terminos, entry_registros, combobox, id_usuario))
+                             command=lambda: insertar_valores(entry_terminos, entry_registros, combobox, id_usuario),
+                             bg="#00afb9", fg="white", relief="raised")
     btn_insertar.grid(row=0, column=0, padx=5)
 
     btn_graficar = tk.Button(frame_botones, text="Graficar", 
-                             command=lambda: graficar_serie(id_usuario, combobox.get(), frame_grafica))
+                             command=lambda: graficar_serie(id_usuario, combobox.get(), frame_grafica),
+                             bg="#f4a261", fg="white", relief="raised")
     btn_graficar.grid(row=0, column=1, padx=5)
+
 
 # Ventana de inicio de sesión
 def ventanaInicioSesion():
@@ -385,24 +388,26 @@ def ventanaInicioSesion():
     root = tk.Tk()
     root.title("Inicio de Sesión")
     root.geometry("500x350")
+    root.configure(bg="#f2e9e4")  # Color de fondo
 
-    tk.Label(root, text="Inicio de Sesión", font=("Arial", 14)).pack(pady=10)
+    tk.Label(root, text="Inicio de Sesión", font=("Arial", 16, "bold"), bg="#f2e9e4").pack(pady=10)
 
-    tk.Label(root, text="Nombre:").pack(pady=5)
+    tk.Label(root, text="Nombre:", bg="#f2e9e4",font=("Arial", 10, "bold")).pack(pady=5)
     global entry_nombre
-    entry_nombre = tk.Entry(root, width=30)
+    entry_nombre = tk.Entry(root, width=30, bg="#FFFFFF", bd=2, relief="groove")
     entry_nombre.pack(pady=5)
 
-    tk.Label(root, text="Correo Electrónico:").pack(pady=5)
+    tk.Label(root, text="Correo Electrónico:", bg="#f2e9e4",font=("Arial", 10, "bold")).pack(pady=5)
     global entry_email
-    entry_email = tk.Entry(root, width=30)
+    entry_email = tk.Entry(root, width=30, bg="#FFFFFF", bd=2, relief="groove")
     entry_email.pack(pady=5)
 
-    tk.Button(root, text="Iniciar Sesión", command=verificar).pack(pady=10)
-    tk.Button(root, text="Registrar Nuevo Usuario", command=ventanaRegistro).pack(pady=30)
+    tk.Button(root, text="Iniciar Sesión", command=verificar, 
+              bg="#00afb9", fg="white", font=("Arial", 12), relief="raised").pack(pady=10)
+    tk.Button(root, text="Registrar Nuevo Usuario", command=ventanaRegistro, 
+              bg="#0081a7", fg="white", font=("Arial", 12), relief="raised").pack(pady=30)
     
     root.mainloop()
-
 ventanaInicioSesion()
 
 
