@@ -109,11 +109,11 @@ def graficar_serie(id_usuario, tipo_serie, frame_grafica):
     fig, ax = plt.subplots(figsize=(8, 6))
 
     if tipo_serie == "coseno":
-        original_vals, ruido_vals, error_vals = cos.leer_desde_bd(id_usuario, tipo_serie)
+        original_vals, ruido_vals, error_vals = leer_desde_bd(id_usuario, tipo_serie)
     elif tipo_serie == "seno":
-        original_vals, ruido_vals, error_vals = seno.leer_desde_bd(id_usuario, tipo_serie)
+        original_vals, ruido_vals, error_vals = leer_desde_bd(id_usuario, tipo_serie)
     elif tipo_serie == "fourier":
-        original_vals, ruido_vals, error_vals = fourier.leer_desde_bd(id_usuario, tipo_serie)
+        original_vals, ruido_vals, error_vals = leer_desde_bd(id_usuario, tipo_serie)
 
     if not original_vals:
         messagebox.showwarning("Advertencia", f"No hay datos disponibles para la serie {tipo_serie}")
@@ -275,6 +275,40 @@ def guardar_registros_bd(original_vals, ruido_vals, error_vals, id_usuario, tipo
 
     except mysql.connector.Error as error:
         print(f"Error al conectar con la base de datos: {error}")
+# Función para leer los datos desde la base de datos
+def leer_desde_bd(id_usuario, tipo_serie):
+    try:
+        # Conexión con la base de datos
+        conexion = mysql.connector.connect(
+            host="localhost",
+            user="root",
+            password="",
+            database="bd_series_trigonometricas"
+        )
+        cursor = conexion.cursor()
+
+        # Consultar los registros por tipo de serie
+        consulta = "SELECT valor_calculado, valor_con_ruido, error FROM registros WHERE tipo_serie = %s AND id_usuario = %s"
+        cursor.execute(consulta, (tipo_serie, id_usuario))
+
+        original_vals = []
+        ruido_vals = []
+        error_vals = []
+
+        for fila in cursor.fetchall():
+            original_vals.append(fila[0])
+            ruido_vals.append(fila[1])
+            error_vals.append(fila[2])
+
+        cursor.close()
+        conexion.close()
+
+        return original_vals, ruido_vals, error_vals
+
+    except mysql.connector.Error as error:
+        print(f"Error al conectar con la base de datos: {error}")
+        return [], [], []
+
 
 def ventanaRegistro():
     global entry_nombre, entry_email, root
@@ -370,6 +404,7 @@ def ventanaInicioSesion():
     root.mainloop()
 
 ventanaInicioSesion()
+
 
 
 
