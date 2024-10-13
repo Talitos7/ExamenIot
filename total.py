@@ -408,16 +408,179 @@ def volver_a_ventana_principal(ventana_dashboard):
     
 # Crear la ventana Dashboard
 def ventanaDashboard():
-    
     ventana_dashboard = tk.Tk()
-    ventana_dashboard.title("Ventana Dashboard")
-    ventana_dashboard.geometry("400x300")
+    ventana_dashboard.title("Dashboard de Series Trigonométricas")
+    ventana_dashboard.geometry("1000x600")
 
-    label_dashboard = tk.Label(ventana_dashboard, text="Estás en el Dashboard", font=("Arial", 14))
-    label_dashboard.pack(pady=20)
+    # Función para cargar todos los datos en la tabla
+    def cargar_todos_los_datos():
+        conexion = conectar()
+        cursor = conexion.cursor()
 
-    boton_volver = tk.Button(ventana_dashboard, text="Volver a la ventana principal", command=lambda: volver_a_ventana_principal(ventana_dashboard))
-    boton_volver.pack(pady=10)
+        # Obtener todos los registros
+        consulta = """
+            SELECT r.id_registro, u.nombre, r.tipo_serie, r.valor_calculado, r.valor_con_ruido, r.error
+            FROM registros r
+            JOIN usuario u ON r.id_usuario = u.id_usuario
+        """
+        cursor.execute(consulta)
+        filas = cursor.fetchall()
+
+        cursor.close()
+        conexion.close()
+
+        # Limpiar tabla antes de insertar nuevos datos
+        for item in tree.get_children():
+            tree.delete(item)
+
+        # Insertar datos en la tabla
+        for fila in filas:
+            tree.insert("", "end", values=fila)
+
+    # Botón para volver a la ventana principal
+    boton_volver = tk.Button(ventana_dashboard, text="Volver a Ventana Principal", command=lambda: volver_a_ventana_principal(ventana_dashboard), 
+                                  bg="#253342", fg="white", font=("Arial", 12), relief="raised")
+    boton_volver.pack(side=tk.TOP, padx=10, pady=10)
+
+    # Frame para los Combobox y filtros
+    frame_filtros = tk.Frame(ventana_dashboard)
+    frame_filtros.pack(side=tk.TOP, fill=tk.X, padx=10, pady=10)
+
+    # Label y Combobox para filtro por usuario
+    label_usuario = tk.Label(frame_filtros, text="Filtrar por Usuario:")
+    label_usuario.pack(side=tk.LEFT, padx=10, pady=10)
+    combobox_usuario = ttk.Combobox(frame_filtros, state="readonly")
+    combobox_usuario.pack(side=tk.LEFT, padx=10, pady=10)
+
+    # Label y Combobox para filtro por serie
+    label_serie = tk.Label(frame_filtros, text="Filtrar por Serie:")
+    label_serie.pack(side=tk.LEFT, padx=10, pady=10)
+    combobox_serie = ttk.Combobox(frame_filtros, state="readonly", values=["", "coseno", "seno", "fourier"])
+    combobox_serie.pack(side=tk.LEFT, padx=10, pady=10)
+
+    # Botón para aplicar los filtros
+    boton_aplicar_filtro = tk.Button(frame_filtros, text="Aplicar Filtro", command=lambda: aplicar_filtro(combobox_usuario.get(), combobox_serie.get()), 
+                                  bg="#23bac4", fg="white", font=("Arial", 12), relief="raised")
+    boton_aplicar_filtro.pack(side=tk.LEFT, padx=10, pady=10)
+
+    # Botón para limpiar los filtros
+    boton_limpiar_filtro = tk.Button(frame_filtros, text="Limpiar Filtros", command=cargar_todos_los_datos, 
+                                  bg="#e36b2c", fg="white", font=("Arial", 12), relief="raised")
+    boton_limpiar_filtro.pack(side=tk.LEFT, padx=10, pady=10)
+
+    # Frame para la tabla
+    frame_tabla = tk.Frame(ventana_dashboard)
+    frame_tabla.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+
+    # Treeview para mostrar los datos en tabla
+    tree = ttk.Treeview(frame_tabla, columns=("ID", "Usuario", "Serie", "Valor Calculado", "Valor Con Ruido", "Error"), show='headings')
+    tree.pack(fill=tk.BOTH, expand=True)
+
+    # Definir las columnas
+    tree.heading("ID", text="ID Registro")
+    tree.heading("Usuario", text="Usuario")
+    tree.heading("Serie", text="Serie")
+    tree.heading("Valor Calculado", text="Valor Calculado")
+    tree.heading("Valor Con Ruido", text="Valor Con Ruido")
+    tree.heading("Error", text="Error")
+
+    # Función para aplicar el filtro seleccionado
+    def aplicar_filtro(usuario, serie):
+        conexion = conectar()
+        cursor = conexion.cursor()
+
+        # Consulta con filtros dinámicos
+        consulta = """
+            SELECT r.id_registro, u.nombre, r.tipo_serie, r.valor_calculado, r.valor_con_ruido, r.error
+            FROM registros r
+            JOIN usuario u ON r.id_usuario = u.id_usuario
+            WHERE (%s = '' OR u.nombre = %s) 
+            AND (%s = '' OR r.tipo_serie = %s)
+        """
+        cursor.execute(consulta, (usuario, usuario, serie, serie))
+        filas = cursor.fetchall()
+
+        cursor.close()
+        conexion.close()
+
+        # Limpiar tabla antes de insertar nuevos datos
+        for item in tree.get_children():
+            tree.delete(item)
+
+        # Insertar datos filtrados en la tabla
+        for fila in filas:
+            tree.insert("", "end", values=fila)
+
+    # Cargar datos al iniciar
+    cargar_todos_los_datos()
+
+    # Frame para el gráfico
+    frame_grafico = tk.Frame(ventana_dashboard)
+    frame_grafico.pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
+
+    # Función para cargar y mostrar los datos en el gráfico automáticamente
+    def mostrar_grafico_auto():
+        conexion = conectar()
+        cursor = conexion.cursor()
+
+        # Consulta para obtener la cantidad de registros por usuario y serie
+        consulta = """
+            SELECT u.nombre, r.tipo_serie, COUNT(*) 
+            FROM registros r
+            JOIN usuario u ON r.id_usuario = u.id_usuario
+            GROUP BY u.nombre, r.tipo_serie
+        """
+        cursor.execute(consulta)
+        datos = cursor.fetchall()
+
+        cursor.close()
+        conexion.close()
+
+        # Procesar los datos para gráfico apilado
+        usuarios = list(set([dato[0] for dato in datos]))  # Usuarios únicos
+        series = ["coseno", "seno", "fourier"]  # Series únicas
+        conteos = {usuario: {serie: 0 for serie in series} for usuario in usuarios}
+
+        for usuario, serie, conteo in datos:
+            conteos[usuario][serie] = conteo
+
+        # Crear el gráfico apilado
+        fig, ax = plt.subplots()
+
+        bottom = np.zeros(len(usuarios))
+        for serie in series:
+            serie_vals = [conteos[usuario][serie] for usuario in usuarios]
+            ax.bar(usuarios, serie_vals, label=serie, bottom=bottom)
+            bottom += np.array(serie_vals)
+
+        ax.set_xlabel("Usuarios")
+        ax.set_ylabel("Cantidad de Registros")
+        ax.set_title("Cantidad de Registros por Usuario y Serie")
+        ax.legend()
+
+        # Limpiar el Frame de gráficos antes de agregar uno nuevo
+        for widget in frame_grafico.winfo_children():
+            widget.destroy()
+
+        # Mostrar el gráfico en el Frame
+        canvas = FigureCanvasTkAgg(fig, master=frame_grafico)
+        canvas.draw()
+        canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
+
+    # Llamar a la función para mostrar el gráfico automáticamente al cargar la ventana
+    mostrar_grafico_auto()
+
+    # Cargar todos los usuarios en el ComboBox
+    def cargar_usuarios():
+        conexion = conectar()
+        cursor = conexion.cursor()
+        cursor.execute("SELECT nombre FROM usuario")
+        usuarios = cursor.fetchall()
+        combobox_usuario["values"] = [usuario[0] for usuario in usuarios]
+        cursor.close()
+        conexion.close()
+
+    cargar_usuarios()
 
     ventana_dashboard.mainloop()
 
@@ -506,7 +669,7 @@ def ventanaPrincipal(id_usuario):
     
     btn_dashboard = tk.Button(frame_botones, text="Dashboard", 
                              command=lambda: abrir_ventana_dashboard(ventana),
-                             bg="#bba9bb", fg="white", relief="raised")
+                             bg="#6dc36d", fg="white", relief="raised")
     btn_dashboard.grid(row=0, column=4, padx=5)
 
 
