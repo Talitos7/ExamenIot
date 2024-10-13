@@ -395,6 +395,33 @@ def run_dash(id_usuario, tipo_serie):
     app.run_server(debug=False, use_reloader=False)
 
 
+# Función para mostrar la ventana del Dashboard y cerrar la ventana principal
+def abrir_ventana_dashboard(ventana):
+    ventana.destroy()  # Cerrar la ventana principal
+    ventanaDashboard()
+
+# Función para volver a la ventana principal desde la ventana Dashboard
+def volver_a_ventana_principal(ventana_dashboard):
+    ventana_dashboard.destroy()  # Cerrar la ventana del Dashboard
+    ventanaPrincipal(id_usuario)
+    
+    
+# Crear la ventana Dashboard
+def ventanaDashboard():
+    
+    ventana_dashboard = tk.Tk()
+    ventana_dashboard.title("Ventana Dashboard")
+    ventana_dashboard.geometry("400x300")
+
+    label_dashboard = tk.Label(ventana_dashboard, text="Estás en el Dashboard", font=("Arial", 14))
+    label_dashboard.pack(pady=20)
+
+    boton_volver = tk.Button(ventana_dashboard, text="Volver a la ventana principal", command=lambda: volver_a_ventana_principal(ventana_dashboard))
+    boton_volver.pack(pady=10)
+
+    ventana_dashboard.mainloop()
+
+
 def ventanaRegistro():
     global entry_nombre, entry_email, root
     root.withdraw()  # Ocultar la ventana de inicio de sesión
@@ -424,6 +451,7 @@ def ventanaRegistro():
 
 
 def ventanaPrincipal(id_usuario):
+    global ventana
     ventana = tk.Toplevel(root)
     ventana.title("SERIE TRIGONOMÉTRICA")
     ventana.geometry("800x600")
@@ -471,15 +499,15 @@ def ventanaPrincipal(id_usuario):
                              bg="#c51d34", fg="white", relief="raised")
     btn_eliminar.grid(row=0, column=2, padx=5)
     
-    btn_dashboard = tk.Button(frame_botones, text="Dashboard", 
-                             command=lambda: "",
-                             bg="#c51d34", fg="white", relief="raised")
-    btn_dashboard.grid(row=0, column=3, padx=5)
-    
     btn_tiemReal = tk.Button(frame_botones, text="Grafica en tiempo real", 
                              command=lambda: threading.Thread(target=run_dash, args=(id_usuario, "seno")).start(),
-                             bg="#c51d34", fg="white", relief="raised")
-    btn_tiemReal.grid(row=0, column=4, padx=5)
+                             bg="#bba9bb", fg="white", relief="raised")
+    btn_tiemReal.grid(row=0, column=3, padx=5)
+    
+    btn_dashboard = tk.Button(frame_botones, text="Dashboard", 
+                             command=lambda: abrir_ventana_dashboard(ventana),
+                             bg="#bba9bb", fg="white", relief="raised")
+    btn_dashboard.grid(row=0, column=4, padx=5)
 
 
 # Ventana de inicio de sesión
@@ -509,9 +537,3 @@ def ventanaInicioSesion():
     
     root.mainloop()
 ventanaInicioSesion()
-
-
-
-
-
-
