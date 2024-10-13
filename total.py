@@ -1,13 +1,17 @@
 import tkinter as tk
 from tkinter import messagebox
 import mysql.connector
+import numpy as np
 import math
 import random
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from tkinter import ttk
-import math
-import random
+import plotly.graph_objs as go
+import dash
+from dash import dcc, html
+from dash.dependencies import Input, Output
+import threading
 
 #import cos
 #import seno
@@ -275,6 +279,26 @@ def guardar_registros_bd(original_vals, ruido_vals, error_vals, id_usuario, tipo
 
     except mysql.connector.Error as error:
         print(f"Error al conectar con la base de datos: {error}")
+        
+#Funcion para borrar datos
+def borrar_datos(combobox, id_usuario):
+    try:
+        tipo_serie = combobox.get()
+        conexion = conectar()
+        cursor = conexion.cursor()
+        
+        consulta = "DELETE FROM registros WHERE id_usuario = %s AND tipo_serie = %s"
+        valores = (id_usuario, tipo_serie)
+        cursor.execute(consulta, valores)
+
+        conexion.commit()
+        cursor.close()
+        conexion.close()
+        
+        messagebox.showinfo("Éxito", "Datos borrados correctamente.")
+    except mysql.connector.Error as error:
+        messagebox.showerror("Error", f"No se pudo borrar los datos: {error}")
+
 # Función para leer los datos desde la base de datos
 def leer_desde_bd(id_usuario, tipo_serie):
     try:
@@ -308,6 +332,67 @@ def leer_desde_bd(id_usuario, tipo_serie):
     except mysql.connector.Error as error:
         print(f"Error al conectar con la base de datos: {error}")
         return [], [], []
+
+
+# Función para obtener datos en tiempo real del usuario y tipo de serie
+def obtener_datos(id_usuario, tipo_serie):
+    try:
+        conexion = conectar()
+        cursor = conexion.cursor()
+
+        consulta = "SELECT valor_calculado, valor_con_ruido FROM registros WHERE id_usuario = %s AND tipo_serie = %s"
+        cursor.execute(consulta, (id_usuario, tipo_serie))
+
+        datos = np.array(cursor.fetchall())
+
+        cursor.close()
+        conexion.close()
+
+        return datos
+
+    except mysql.connector.Error as error:
+        print(f"Error al conectar con la base de datos: {error}")
+        return np.array([])
+
+# Función para iniciar la aplicación Dash en un hilo
+def run_dash(id_usuario, tipo_serie):
+    app = dash.Dash(__name__)
+
+    app.layout = html.Div([
+        html.H1("Gráficas en Tiempo Real"),
+        dcc.Dropdown(
+            id='tipo-serie-dropdown',
+            options=[
+                {'label': 'Seno', 'value': 'seno'},
+                {'label': 'Coseno', 'value': 'coseno'},
+                {'label': 'Fourier', 'value': 'fourier'},
+            ],
+            value='seno'  # Valor por defecto
+        ),
+        dcc.Graph(id='live-graph'),
+        dcc.Interval(id='interval-component', interval=1000, n_intervals=0)  # Actualiza cada segundo
+    ])
+
+    @app.callback(
+        Output('live-graph', 'figure'),
+        Input('interval-component', 'n_intervals'),
+        Input('tipo-serie-dropdown', 'value')
+    )
+    def update_graph(n, tipo_serie):
+        datos = obtener_datos(id_usuario, tipo_serie)
+
+        if datos.size == 0:
+            return {'data': [], 'layout': go.Layout(title='No hay datos para el usuario')}
+
+        x = np.arange(len(datos))  # Generar el eje x
+        y = datos[:, 1]  # Valor con ruido
+
+        return {
+            'data': [go.Scatter(x=x, y=y, mode='lines', name='Datos')],
+            'layout': go.Layout(title=f'Gráfico para el usuario: {id_usuario}, Serie: {tipo_serie.capitalize()}', xaxis=dict(title='Registro'), yaxis=dict(title='Valor'))
+        }
+
+    app.run_server(debug=False, use_reloader=False)
 
 
 def ventanaRegistro():
@@ -380,6 +465,21 @@ def ventanaPrincipal(id_usuario):
                              command=lambda: graficar_serie(id_usuario, combobox.get(), frame_grafica),
                              bg="#f4a261", fg="white", relief="raised")
     btn_graficar.grid(row=0, column=1, padx=5)
+    
+    btn_eliminar = tk.Button(frame_botones, text="Borrar datos antiguos", 
+                             command=lambda: borrar_datos(combobox, id_usuario),
+                             bg="#c51d34", fg="white", relief="raised")
+    btn_eliminar.grid(row=0, column=2, padx=5)
+    
+    btn_dashboard = tk.Button(frame_botones, text="Dashboard", 
+                             command=lambda: "",
+                             bg="#c51d34", fg="white", relief="raised")
+    btn_dashboard.grid(row=0, column=3, padx=5)
+    
+    btn_tiemReal = tk.Button(frame_botones, text="Grafica en tiempo real", 
+                             command=lambda: threading.Thread(target=run_dash, args=(id_usuario, "seno")).start(),
+                             bg="#c51d34", fg="white", relief="raised")
+    btn_tiemReal.grid(row=0, column=4, padx=5)
 
 
 # Ventana de inicio de sesión
